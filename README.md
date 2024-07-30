@@ -7,3 +7,5 @@ Please update the URL in the model to accommodate images from external sources, 
 
 path = "./datasets/three.png".
 
+
+*(The 'datasets' folder contains images only used to test the model's accuracy with external images.)
