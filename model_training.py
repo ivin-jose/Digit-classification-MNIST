@@ -5,61 +5,52 @@ from keras import *
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
-from tensorflow.keras.layers import Dense
+from tensorflow.keras import layers
 np.random.seed(0)
 import cv2
+
 # Dataset
 
 from keras.datasets import mnist
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-# print("x-train : ", x_train.shape)
-# print("y-train : ", y_train.shape)
-# print("x-test : ", x_test.shape)
-# print("y-test : ", y_test.shape)
+# Converting to one-hot encoded format 
 
-# Visualize examples
-
-num_classes = 10
-f, ax = plt.subplots(1, num_classes, figsize=(20, 20))
-
-for i in range(0, num_classes):
-  sample = x_train[y_train == i][0]
-  ax[i].imshow(sample, cmap='gray')
-  ax[i].set_title(f"Label : {i}", fontsize=16)
-
-y_train = keras.utils.to_categorical(y_train, num_classes)
-y_test = keras.utils.to_categorical(y_test, num_classes)
-# print(x_train.shape)
+num_classe = 10
+y_train = keras.utils.to_categorical(y_train, num_classe)
+y_test = keras.utils.to_categorical(y_test, num_classe)
+print(x_train.shape)
 
 # Normalization
 
 x_train = x_train / 255.0
 x_test = x_test / 255.0
 
-#  Flattening the array to 1 dimension (Reshapeing)
+# Reshaping to 3d model
 
-x_train= x_train.reshape(x_train.shape[0], -1) # Meaning (60000, 28*28)
-# print(x_train.shape) # output (60000, 784)
+x_train = x_train.reshape(-1, 28, 28, 1)
+x_test = x_test.reshape(-1, 28, 28, 1)
 
 
 # ----------------------------------------------------------------------------------------
 
-'''# Model creation 98.21% accuracy'''
+'''Model'''
 
 model = Sequential([
-    Dense(256, activation='relu', input_shape=(784,)),
-    Dense(512, activation='relu'),
-    layers.Dropout( 0.25),
-    Dense(512, activation='relu'),
-    layers.Dropout( 0.25),
-    Dense(num_classes, activation='softmax')
+    layers.Conv2D(6, (5, 5), activation='relu', input_shape=(28, 28, 1)),
+    layers.AveragePooling2D(pool_size=(2, 2)),
+    layers.Conv2D(16, (5, 5), activation='relu'),
+    layers.AveragePooling2D(pool_size=(2, 2)),
+    layers.Flatten(),
+    layers.Dense(120, activation='relu'),
+    layers.Dense(84, activation='relu'),
+    layers.Dense(10, activation='softmax')
 ])
 model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=['accuracy'])
 
 # model.summary()
 
-batch_size = 512 # 512 images at a time in network
+batch_size = 32 # 32 images at a time in network
 epochs = 10
 
 model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=epochs)
@@ -69,20 +60,21 @@ model.fit(x=x_train, y=y_train, batch_size=batch_size, epochs=epochs)
 
 '''Evaluate'''
 
-x_test = x_test.reshape(x_test.shape[0], -1)
+x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
 test_loss, test_acc = model.evaluate(x_test, y_test)
-# print("test loss", test_loss)
+print("Test loss", test_loss)
+print("Test accuracy", test_acc)
 
 # ----------------------------------------------------------------------------------------
 
 ''' Testing with an image from outside'''
 
 # Preparing the input image
-path = "./datasets/three.png"
+path = "./datasets/a.png"
 input_image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
 input_image = cv2.resize(input_image, (28, 28))
 input_image = input_image.astype('float32') / 255.0
-input_image = np.reshape(input_image, (1, 28*28))
+input_image = np.reshape(input_image, (1, 28, 28, 1))
 
 # Making predictions
 prediction = model.predict(input_image)
@@ -98,20 +90,11 @@ y_pred_classes = np.argmax(y_pred, axis=1)
 
 
 
-print(y_pred)
-print(y_pred_classes)
-
-
-# ----------------------------------------------------------------------------------------
 
 
 
 
-
-
-
-
-
+model.save('handwritten_lenet_model.h5')
 
 
 
